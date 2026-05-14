@@ -1,0 +1,1599 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creador de Páginas Educativas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f0f0f0;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .editor-container {
+            display: flex;
+            height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar h2 {
+            margin-bottom: 20px;
+            color: #ecf0f1;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .tool-group {
+            margin-bottom: 25px;
+        }
+
+        .tool-group h3 {
+            color: #3498db;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .tool-btn {
+            width: 100%;
+            padding: 12px;
+            margin: 5px 0;
+            background: #34495e;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .tool-btn:hover {
+            background: #3498db;
+            transform: translateX(5px);
+        }
+
+        .pages-section {
+            margin-top: 30px;
+        }
+
+        .pages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .page-item {
+            background: #34495e;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .page-item:hover {
+            background: #3498db;
+        }
+
+        .page-item.active {
+            background: #e74c3c;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .toolbar {
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .toolbar input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        .canvas {
+            flex: 1;
+            background: white;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: auto;
+            min-height: 500px;
+            padding: 40px;
+        }
+
+        .editable-element {
+            position: absolute;
+            cursor: move;
+            min-width: 50px;
+            min-height: 30px;
+        }
+
+        .custom-button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            position: absolute;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-button:hover {
+            opacity: 0.9;
+            transform: scale(1.02);
+        }
+
+        .custom-text {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: move;
+            padding: 10px;
+        }
+
+        .custom-image {
+            position: absolute;
+            cursor: move;
+            border: 3px solid #3498db;
+            border-radius: 5px;
+            max-width: none;
+            max-height: none;
+        }
+
+        .resize-handle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #e74c3c;
+            border: 1px solid white;
+        }
+
+        .resize-handle.bottom-right {
+            bottom: -5px;
+            right: -5px;
+            cursor: se-resize;
+        }
+
+        .resize-handle.bottom-left {
+            bottom: -5px;
+            left: -5px;
+            cursor: sw-resize;
+        }
+
+        .resize-handle.top-right {
+            top: -5px;
+            right: -5px;
+            cursor: ne-resize;
+        }
+
+        .resize-handle.top-left {
+            top: -5px;
+            left: -5px;
+            cursor: nw-resize;
+        }
+
+        .context-menu {
+            display: none;
+            position: fixed;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            min-width: 200px;
+            padding: 5px 0;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .context-menu-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+        }
+
+        .context-menu-item:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-content h2 {
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .modal-content input, .modal-content select {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .modal-content button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #7f8c8d;
+        }
+
+        .delete-page-btn {
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 2px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-page-btn:hover {
+            background: #c0392b;
+        }
+
+        /* Estilos para el selector de color */
+        .color-picker-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 3000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .color-picker-modal.show {
+            display: flex;
+        }
+
+        .color-picker-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+            max-width: 450px;
+            width: 95%;
+        }
+
+        .color-picker-content h2 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            font-size: 18px;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin: 15px 0;
+        }
+
+        .color-swatch {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .color-swatch:hover {
+            transform: scale(1.15);
+            border-color: #2c3e50;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .color-preview {
+            width: 100%;
+            height: 50px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 2px solid #ddd;
+            transition: all 0.3s;
+        }
+
+        .color-custom-section {
+            border-top: 1px solid #eee;
+            padding-top: 15px;
+            margin-top: 10px;
+        }
+
+        .color-custom-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .color-custom-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .color-custom-input button {
+            padding: 10px 15px;
+            white-space: nowrap;
+        }
+
+        /* Botón de vista previa */
+        .preview-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+
+        .preview-btn:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .preview-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 5000;
+            display: none;
+        }
+
+        .preview-mode.show {
+            display: block;
+        }
+
+        .preview-mode .canvas {
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            height: 100vh;
+        }
+
+        .close-preview-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #e74c3c;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 18px;
+            z-index: 5001;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+
+        .close-preview-btn:hover {
+            background: #c0392b;
+            transform: translateX(-50%) translateY(-3px);
+        }
+
+        .icon {
+            font-size: 20px;
+        }
+
+        .link-indicator {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #2ecc71;
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="editor-container" id="editorContainer">
+        <!-- Barra lateral izquierda -->
+        <div class="sidebar">
+            <h2>🎨 Herramientas</h2>
+            
+            <div class="tool-group">
+                <h3>📝 Elementos</h3>
+                <button class="tool-btn" onclick="addTextElement()">📝 Agregar Título/Texto</button>
+                <button class="tool-btn" onclick="addButtonElement()">🔘 Agregar Botón</button>
+                <button class="tool-btn" onclick="showImageModal()">🖼️ Agregar Imagen (URL)</button>
+            </div>
+
+            <div class="tool-group">
+                <h3>🎨 Estilo del Lienzo</h3>
+                <button class="tool-btn" onclick="openColorPicker('canvas')">🎨 Color de Fondo</button>
+                <button class="tool-btn" onclick="changeBackgroundTexture()">🔲 Textura de Fondo</button>
+            </div>
+
+            <div class="pages-section">
+                <h3>📄 Páginas</h3>
+                <button class="tool-btn" onclick="showNewPageModal()">➕ Nueva Página</button>
+                <div class="pages-list" id="pagesList">
+                    <div class="page-item active" data-page="main">
+                        Principal
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="main-content" id="mainContent">
+            <div class="toolbar">
+                <input type="text" id="globalTitle" placeholder="Título de la página..." 
+                       onchange="updatePageTitle()" value="Mi Página Educativa">
+                <button class="tool-btn" onclick="updatePageTitle()" style="width: auto; padding: 10px 20px;">
+                    Actualizar Título
+                </button>
+            </div>
+            
+            <button class="preview-btn" onclick="enterPreviewMode()">
+                <span class="icon">👁️</span> Vista Previa
+            </button>
+            
+            <div class="canvas" id="mainCanvas">
+                <!-- Los elementos se agregarán aquí dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modo vista previa -->
+    <div class="preview-mode" id="previewMode">
+        <div class="canvas" id="previewCanvas"></div>
+        <button class="close-preview-btn" onclick="exitPreviewMode()">
+            <span class="icon">✕</span> Cerrar Vista Previa
+        </button>
+    </div>
+
+    <!-- Menú contextual -->
+    <div class="context-menu" id="contextMenu">
+        <div class="context-menu-item" onclick="cutElement()">✂️ Cortar</div>
+        <div class="context-menu-item" onclick="copyElement()">📋 Copiar</div>
+        <div class="context-menu-item" onclick="pasteElement()">📌 Pegar</div>
+        <div class="context-menu-item" onclick="editElementText()">✏️ Editar Texto</div>
+        <div class="context-menu-item" onclick="openColorPicker('element')">🎨 Cambiar Color</div>
+        <div class="context-menu-item" onclick="changeElementSize()">📏 Cambiar Tamaño</div>
+        <div class="context-menu-item" onclick="addLink()">🔗 Agregar/Editar Vínculo</div>
+        <div class="context-menu-item" onclick="removeLink()" style="display:none;">🔓 Eliminar Vínculo</div>
+        <div class="context-menu-item" onclick="openColorPicker('border')">🖼️ Cambiar Borde</div>
+        <div class="context-menu-item" onclick="deleteElement()">🗑️ Eliminar</div>
+    </div>
+
+    <!-- Selector de color -->
+    <div class="color-picker-modal" id="colorPickerModal">
+        <div class="color-picker-content">
+            <h2>🎨 Seleccionar Color - Haz clic para aplicar</h2>
+            
+            <div class="color-grid" id="colorGrid">
+                <!-- Los colores se generarán aquí -->
+            </div>
+            
+            <div class="color-preview" id="colorPreview" style="background-color: #3498db;"></div>
+            
+            <div class="color-custom-section">
+                <p style="font-size: 13px; color: #666; margin-bottom: 8px;">O escribe un color personalizado:</p>
+                <div class="color-custom-input">
+                    <input type="text" id="customColorInput" placeholder="#3498db o red, blue, etc.">
+                    <button class="btn-primary" onclick="applyCustomColor()">Aplicar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para nueva página -->
+    <div class="modal" id="newPageModal">
+        <div class="modal-content">
+            <h2>Crear Nueva Página</h2>
+            <input type="text" id="newPageName" placeholder="Nombre de la página...">
+            <div style="margin-top: 20px;">
+                <button class="btn-primary" onclick="createNewPage()">Crear</button>
+                <button class="btn-secondary" onclick="closeModal('newPageModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para insertar imagen -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <h2>Insertar Imagen</h2>
+            <input type="text" id="imageUrl" placeholder="URL de la imagen...">
+            <p style="color: #7f8c8d; font-size: 12px; margin-top: 5px;">
+                Inserta el enlace de una imagen de Google Images
+            </p>
+            <div style="margin-top: 20px;">
+                <button class="btn-primary" onclick="insertImage()">Insertar</button>
+                <button class="btn-secondary" onclick="closeModal('imageModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para vincular -->
+    <div class="modal" id="linkModal">
+        <div class="modal-content">
+            <h2>Vincular a Página</h2>
+            <select id="pageSelector">
+                <option value="">Seleccionar página...</option>
+            </select>
+            <div id="noPagesMessage" style="color: #e74c3c; display: none; margin-top: 10px;">
+                No tienes ninguna página secundaria creada
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn-primary" onclick="setLink()">Vincular</button>
+                <button class="btn-secondary" onclick="closeModal('linkModal')">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Estado global
+        let currentPage = 'main';
+        let pages = {
+            'main': {
+                title: 'Mi Página Educativa',
+                elements: [],
+                background: '#ffffff'
+            }
+        };
+        let selectedElement = null;
+        let copiedElement = null;
+        let elementIdCounter = 0;
+        let contextMenuElement = null;
+        let isDragging = false;
+        let isResizing = false;
+        let dragOffset = { x: 0, y: 0 };
+        let currentResizeHandle = null;
+        let selectedColor = '#3498db';
+        let colorPickerTarget = null; // 'canvas', 'element', 'border'
+
+        // Paleta de colores predefinida
+        const colorPalette = [
+            // Rojos
+            '#FF0000', '#FF4444', '#CC0000', '#FF6666', '#FF9999', '#FFCCCC',
+            '#E74C3C', '#C0392B', '#FF6B6B',
+            
+            // Naranjas
+            '#FF8C00', '#FFA500', '#FFB347', '#FF7F50', '#FF6347',
+            '#E67E22', '#D35400',
+            
+            // Amarillos
+            '#FFD700', '#FFFF00', '#FFEB3B', '#FFF176', '#FFF59D',
+            '#F1C40F', '#F39C12',
+            
+            // Verdes
+            '#00FF00', '#32CD32', '#90EE90', '#98FB98', '#00FA9A',
+            '#2ECC71', '#27AE60', '#4CAF50', '#8BC34A',
+            
+            // Azules
+            '#0000FF', '#4169E1', '#6495ED', '#87CEEB', '#00BFFF',
+            '#3498DB', '#2980B9', '#2196F3', '#03A9F4',
+            
+            // Púrpuras
+            '#800080', '#9932CC', '#BA55D3', '#DA70D6', '#DDA0DD',
+            '#9B59B6', '#8E44AD', '#673AB7',
+            
+            // Rosas
+            '#FF69B4', '#FF1493', '#DB7093', '#FFB6C1', '#FF69B4',
+            '#E91E63', '#F06292',
+            
+            // Neutros
+            '#000000', '#333333', '#666666', '#999999', '#CCCCCC',
+            '#FFFFFF', '#F5F5F5', '#EEEEEE', '#DDDDDD',
+            
+            // Marrones
+            '#8B4513', '#A0522D', '#D2691E', '#CD853F', '#DEB887',
+            '#795548', '#607D8B',
+            
+            // Turquesas
+            '#00CED1', '#20B2AA', '#48D1CC', '#00BCD4', '#009688'
+        ];
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPage('main');
+            setupEventListeners();
+            generateColorGrid();
+        });
+
+        function generateColorGrid() {
+            const colorGrid = document.getElementById('colorGrid');
+            colorGrid.innerHTML = '';
+            
+            colorPalette.forEach(color => {
+                const swatch = document.createElement('div');
+                swatch.className = 'color-swatch';
+                swatch.style.backgroundColor = color;
+                swatch.title = color;
+                swatch.onclick = () => applyColorAndClose(color);
+                colorGrid.appendChild(swatch);
+            });
+        }
+
+        function applyColorAndClose(color) {
+            selectedColor = color;
+            document.getElementById('colorPreview').style.backgroundColor = color;
+            document.getElementById('customColorInput').value = color;
+            
+            // Aplicar el color inmediatamente
+            applyColorToTarget();
+            
+            // Cerrar el modal
+            closeColorPicker();
+        }
+
+        function applyColorToTarget() {
+            if (colorPickerTarget === 'canvas') {
+                pages[currentPage].background = selectedColor;
+                document.getElementById('mainCanvas').style.backgroundColor = selectedColor;
+            } else if (colorPickerTarget === 'element' && contextMenuElement) {
+                if (contextMenuElement.classList.contains('custom-text')) {
+                    contextMenuElement.style.color = selectedColor;
+                } else {
+                    contextMenuElement.style.backgroundColor = selectedColor;
+                }
+                updateElementData(contextMenuElement);
+            } else if (colorPickerTarget === 'border' && contextMenuElement && contextMenuElement.classList.contains('custom-image')) {
+                const borderParts = contextMenuElement.style.border.split(' ');
+                const borderWidth = borderParts[0] || '3px';
+                const borderStyle = borderParts[1] || 'solid';
+                contextMenuElement.style.border = `${borderWidth} ${borderStyle} ${selectedColor}`;
+                updateElementData(contextMenuElement);
+            }
+        }
+
+        function applyCustomColor() {
+            const colorInput = document.getElementById('customColorInput').value.trim();
+            if (colorInput && isValidColor(colorInput)) {
+                selectedColor = colorInput;
+                document.getElementById('colorPreview').style.backgroundColor = colorInput;
+                
+                // Aplicar el color inmediatamente
+                applyColorToTarget();
+                
+                // Cerrar el modal
+                closeColorPicker();
+            } else if (colorInput) {
+                alert('Color no válido. Intenta con un formato como: #ff0000, red, rgb(255,0,0)');
+            }
+        }
+
+        function isValidColor(color) {
+            const s = new Option().style;
+            s.color = color;
+            return s.color !== '';
+        }
+
+        function openColorPicker(target) {
+            colorPickerTarget = target;
+            const modal = document.getElementById('colorPickerModal');
+            
+            // Pre-seleccionar color actual según el objetivo
+            if (target === 'canvas') {
+                const currentBg = pages[currentPage].background;
+                if (isValidColor(currentBg) && currentBg !== '') {
+                    selectedColor = currentBg;
+                }
+            } else if (target === 'element' && contextMenuElement) {
+                if (contextMenuElement.classList.contains('custom-text')) {
+                    selectedColor = contextMenuElement.style.color || '#000000';
+                } else {
+                    selectedColor = contextMenuElement.style.backgroundColor || '#3498db';
+                }
+            } else if (target === 'border' && contextMenuElement) {
+                const borderColor = contextMenuElement.style.border.split(' ')[2] || '#3498db';
+                selectedColor = borderColor;
+            }
+            
+            document.getElementById('colorPreview').style.backgroundColor = selectedColor;
+            document.getElementById('customColorInput').value = selectedColor;
+            
+            modal.classList.add('show');
+        }
+
+        function closeColorPicker() {
+            document.getElementById('colorPickerModal').classList.remove('show');
+            colorPickerTarget = null;
+        }
+
+        function enterPreviewMode() {
+            const previewCanvas = document.getElementById('previewCanvas');
+            const mainCanvas = document.getElementById('mainCanvas');
+            
+            // Limpiar canvas de preview
+            previewCanvas.innerHTML = '';
+            
+            // Copiar el contenido y estilos del canvas principal
+            previewCanvas.style.backgroundColor = pages[currentPage].background;
+            
+            // Recrear elementos en el canvas de preview con funcionalidad de enlaces
+            pages[currentPage].elements.forEach(elementData => {
+                let previewElement;
+                
+                if (elementData.type === 'button') {
+                    previewElement = document.createElement('button');
+                    previewElement.className = 'custom-button';
+                    previewElement.textContent = elementData.text;
+                    previewElement.style.backgroundColor = elementData.color;
+                    previewElement.style.color = 'white';
+                    previewElement.style.border = 'none';
+                    previewElement.style.padding = '12px 24px';
+                    previewElement.style.borderRadius = '5px';
+                    previewElement.style.cursor = elementData.link ? 'pointer' : 'default';
+                    previewElement.style.fontSize = '14px';
+                    previewElement.style.transition = 'all 0.3s';
+                } else if (elementData.type === 'text') {
+                    previewElement = document.createElement('div');
+                    previewElement.className = 'custom-text';
+                    previewElement.textContent = elementData.text;
+                    previewElement.style.color = elementData.color;
+                    previewElement.style.fontSize = elementData.fontSize + 'px';
+                    previewElement.style.fontFamily = elementData.fontFamily;
+                    previewElement.style.cursor = 'default';
+                } else if (elementData.type === 'image') {
+                    previewElement = document.createElement('img');
+                    previewElement.className = 'custom-image';
+                    previewElement.src = elementData.src;
+                    previewElement.style.border = elementData.border;
+                    previewElement.style.borderRadius = elementData.borderRadius;
+                    previewElement.style.cursor = elementData.link ? 'pointer' : 'default';
+                }
+                
+                if (previewElement) {
+                    previewElement.style.position = 'absolute';
+                    previewElement.style.left = elementData.x + 'px';
+                    previewElement.style.top = elementData.y + 'px';
+                    
+                    if (elementData.type === 'button' || elementData.type === 'image') {
+                        previewElement.style.width = elementData.width + 'px';
+                        previewElement.style.height = elementData.height + 'px';
+                    }
+                    
+                    // Agregar funcionalidad de enlace en la vista previa
+                    if (elementData.link && pages[elementData.link]) {
+                        previewElement.onclick = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            loadPageInPreview(elementData.link);
+                        };
+                        previewElement.onmouseover = function() {
+                            this.style.opacity = '0.9';
+                            this.style.transform = 'scale(1.02)';
+                        };
+                        previewElement.onmouseout = function() {
+                            this.style.opacity = '1';
+                            this.style.transform = 'scale(1)';
+                        };
+                    }
+                    
+                    previewCanvas.appendChild(previewElement);
+                }
+            });
+            
+            // Guardar la página actual para la navegación en preview
+            window._previewCurrentPage = currentPage;
+            
+            document.getElementById('previewMode').classList.add('show');
+        }
+
+        function loadPageInPreview(pageId) {
+            const previewCanvas = document.getElementById('previewCanvas');
+            const page = pages[pageId];
+            
+            // Actualizar canvas de preview
+            previewCanvas.style.backgroundColor = page.background;
+            previewCanvas.innerHTML = '';
+            
+            // Cargar elementos de la nueva página
+            page.elements.forEach(elementData => {
+                let previewElement;
+                
+                if (elementData.type === 'button') {
+                    previewElement = document.createElement('button');
+                    previewElement.className = 'custom-button';
+                    previewElement.textContent = elementData.text;
+                    previewElement.style.backgroundColor = elementData.color;
+                    previewElement.style.color = 'white';
+                    previewElement.style.border = 'none';
+                    previewElement.style.padding = '12px 24px';
+                    previewElement.style.borderRadius = '5px';
+                    previewElement.style.cursor = elementData.link ? 'pointer' : 'default';
+                    previewElement.style.fontSize = '14px';
+                    previewElement.style.transition = 'all 0.3s';
+                } else if (elementData.type === 'text') {
+                    previewElement = document.createElement('div');
+                    previewElement.className = 'custom-text';
+                    previewElement.textContent = elementData.text;
+                    previewElement.style.color = elementData.color;
+                    previewElement.style.fontSize = elementData.fontSize + 'px';
+                    previewElement.style.fontFamily = elementData.fontFamily;
+                    previewElement.style.cursor = 'default';
+                } else if (elementData.type === 'image') {
+                    previewElement = document.createElement('img');
+                    previewElement.className = 'custom-image';
+                    previewElement.src = elementData.src;
+                    previewElement.style.border = elementData.border;
+                    previewElement.style.borderRadius = elementData.borderRadius;
+                    previewElement.style.cursor = elementData.link ? 'pointer' : 'default';
+                }
+                
+                if (previewElement) {
+                    previewElement.style.position = 'absolute';
+                    previewElement.style.left = elementData.x + 'px';
+                    previewElement.style.top = elementData.y + 'px';
+                    
+                    if (elementData.type === 'button' || elementData.type === 'image') {
+                        previewElement.style.width = elementData.width + 'px';
+                        previewElement.style.height = elementData.height + 'px';
+                    }
+                    
+                    // Agregar funcionalidad de enlace
+                    if (elementData.link && pages[elementData.link]) {
+                        previewElement.onclick = function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            loadPageInPreview(elementData.link);
+                        };
+                        previewElement.onmouseover = function() {
+                            this.style.opacity = '0.9';
+                            this.style.transform = 'scale(1.02)';
+                        };
+                        previewElement.onmouseout = function() {
+                            this.style.opacity = '1';
+                            this.style.transform = 'scale(1)';
+                        };
+                    }
+                    
+                    previewCanvas.appendChild(previewElement);
+                }
+            });
+            
+            window._previewCurrentPage = pageId;
+        }
+
+        function exitPreviewMode() {
+            document.getElementById('previewMode').classList.remove('show');
+            // Restaurar la página que se estaba viendo en el preview
+            if (window._previewCurrentPage && window._previewCurrentPage !== currentPage) {
+                loadPage(window._previewCurrentPage);
+            }
+        }
+
+        function setupEventListeners() {
+            // Cerrar menú contextual al hacer clic fuera
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.context-menu')) {
+                    document.getElementById('contextMenu').classList.remove('show');
+                }
+            });
+
+            // Prevenir menú contextual del navegador en el canvas
+            document.getElementById('mainCanvas').addEventListener('contextmenu', function(e) {
+                if (e.target.closest('.custom-button') || e.target.closest('.custom-image') || e.target.closest('.custom-text')) {
+                    e.preventDefault();
+                }
+            });
+
+            // Eventos de arrastre globales
+            document.addEventListener('mousemove', handleDrag);
+            document.addEventListener('mouseup', stopDrag);
+            
+            // Prevenir menú contextual en vista previa
+            document.getElementById('previewCanvas').addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+            });
+
+            // Cerrar modal de color con tecla Escape
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeColorPicker();
+                }
+            });
+
+            // Cerrar modal de color al hacer clic fuera
+            document.getElementById('colorPickerModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeColorPicker();
+                }
+            });
+        }
+
+        // Funciones de página
+        function loadPage(pageId) {
+            currentPage = pageId;
+            const canvas = document.getElementById('mainCanvas');
+            const page = pages[pageId];
+            
+            canvas.style.backgroundColor = page.background;
+            document.getElementById('globalTitle').value = page.title;
+            
+            // Limpiar canvas
+            canvas.innerHTML = '';
+            
+            // Cargar elementos
+            page.elements.forEach(element => {
+                createElement(element);
+            });
+
+            // Actualizar lista de páginas
+            updatePagesList();
+        }
+
+        function updatePagesList() {
+            const pagesList = document.getElementById('pagesList');
+            pagesList.innerHTML = '';
+            
+            for (const [pageId, page] of Object.entries(pages)) {
+                const pageItem = document.createElement('div');
+                pageItem.className = 'page-item' + (pageId === currentPage ? ' active' : '');
+                pageItem.innerHTML = `
+                    <span onclick="loadPage('${pageId}')">${page.title || pageId}</span>
+                    ${pageId !== 'main' ? `<button class="delete-page-btn" onclick="deletePage('${pageId}')">×</button>` : ''}
+                `;
+                pagesList.appendChild(pageItem);
+            }
+        }
+
+        function showNewPageModal() {
+            document.getElementById('newPageModal').classList.add('show');
+        }
+
+        function createNewPage() {
+            const pageName = document.getElementById('newPageName').value.trim();
+            if (pageName) {
+                const pageId = 'page_' + Date.now();
+                pages[pageId] = {
+                    title: pageName,
+                    elements: [],
+                    background: '#ffffff'
+                };
+                document.getElementById('newPageName').value = '';
+                closeModal('newPageModal');
+                updatePagesList();
+            }
+        }
+
+        function deletePage(pageId) {
+            if (confirm('¿Estás seguro de eliminar esta página?')) {
+                // Eliminar referencias a esta página en los elementos
+                for (const [pId, page] of Object.entries(pages)) {
+                    page.elements.forEach(element => {
+                        if (element.link === pageId) {
+                            element.link = null;
+                        }
+                    });
+                }
+                
+                delete pages[pageId];
+                if (currentPage === pageId) {
+                    loadPage('main');
+                }
+                updatePagesList();
+            }
+        }
+
+        function updatePageTitle() {
+            const newTitle = document.getElementById('globalTitle').value;
+            pages[currentPage].title = newTitle;
+            document.title = newTitle;
+            updatePagesList();
+        }
+
+        // Funciones de elementos
+        function createElement(elementData) {
+            const canvas = document.getElementById('mainCanvas');
+            let element;
+            
+            if (elementData.type === 'button') {
+                element = document.createElement('button');
+                element.className = 'custom-button editable-element';
+                element.textContent = elementData.text;
+                element.style.backgroundColor = elementData.color;
+                element.style.left = elementData.x + 'px';
+                element.style.top = elementData.y + 'px';
+                element.style.width = elementData.width + 'px';
+                element.style.height = elementData.height + 'px';
+                
+                if (elementData.link && pages[elementData.link]) {
+                    element.onclick = function(e) {
+                        e.stopPropagation();
+                        loadPage(elementData.link);
+                    };
+                    element.style.cursor = 'pointer';
+                    
+                    // Agregar indicador de enlace
+                    const indicator = document.createElement('div');
+                    indicator.className = 'link-indicator';
+                    indicator.textContent = '🔗';
+                    element.appendChild(indicator);
+                }
+            } else if (elementData.type === 'text') {
+                element = document.createElement('div');
+                element.className = 'custom-text editable-element';
+                element.textContent = elementData.text;
+                element.style.color = elementData.color;
+                element.style.fontSize = elementData.fontSize + 'px';
+                element.style.fontFamily = elementData.fontFamily;
+                element.style.left = elementData.x + 'px';
+                element.style.top = elementData.y + 'px';
+            } else if (elementData.type === 'image') {
+                element = document.createElement('img');
+                element.className = 'custom-image editable-element';
+                element.src = elementData.src;
+                element.style.left = elementData.x + 'px';
+                element.style.top = elementData.y + 'px';
+                element.style.width = elementData.width + 'px';
+                element.style.height = elementData.height + 'px';
+                element.style.border = elementData.border;
+                element.style.borderRadius = elementData.borderRadius;
+                
+                if (elementData.link && pages[elementData.link]) {
+                    element.onclick = function(e) {
+                        e.stopPropagation();
+                        loadPage(elementData.link);
+                    };
+                    element.style.cursor = 'pointer';
+                    
+                    // Agregar indicador de enlace
+                    const indicator = document.createElement('div');
+                    indicator.className = 'link-indicator';
+                    indicator.textContent = '🔗';
+                    element.appendChild(indicator);
+                }
+            }
+            
+            if (element) {
+                element.id = 'element_' + elementData.id;
+                addResizeHandles(element);
+                setupElementEvents(element);
+                canvas.appendChild(element);
+            }
+        }
+
+        function addResizeHandles(element) {
+            const handles = ['bottom-right', 'bottom-left', 'top-right', 'top-left'];
+            handles.forEach(position => {
+                const handle = document.createElement('div');
+                handle.className = `resize-handle ${position}`;
+                handle.addEventListener('mousedown', function(e) {
+                    e.stopPropagation();
+                    startResize(e, element, position);
+                });
+                element.appendChild(handle);
+            });
+        }
+
+        function setupElementEvents(element) {
+            element.addEventListener('mousedown', function(e) {
+                if (!e.target.classList.contains('resize-handle') && !e.target.classList.contains('link-indicator')) {
+                    e.stopPropagation();
+                    startDrag(e, element);
+                }
+            });
+
+            element.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                showContextMenu(e, element);
+            });
+
+            element.addEventListener('click', function(e) {
+                if (!e.target.classList.contains('link-indicator')) {
+                    selectElement(element);
+                    e.stopPropagation();
+                }
+            });
+        }
+
+        function startDrag(e, element) {
+            isDragging = true;
+            selectedElement = element;
+            const rect = element.getBoundingClientRect();
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            element.style.cursor = 'grabbing';
+        }
+
+        function startResize(e, element, handle) {
+            isResizing = true;
+            selectedElement = element;
+            currentResizeHandle = handle;
+            e.stopPropagation();
+        }
+
+        function handleDrag(e) {
+            if (isDragging && selectedElement) {
+                const canvas = document.getElementById('mainCanvas');
+                const canvasRect = canvas.getBoundingClientRect();
+                
+                let newX = e.clientX - canvasRect.left - dragOffset.x;
+                let newY = e.clientY - canvasRect.top - dragOffset.y;
+                
+                newX = Math.max(0, Math.min(newX, canvasRect.width - selectedElement.offsetWidth));
+                newY = Math.max(0, Math.min(newY, canvasRect.height - selectedElement.offsetHeight));
+                
+                selectedElement.style.left = newX + 'px';
+                selectedElement.style.top = newY + 'px';
+                
+                updateElementData(selectedElement);
+            }
+            
+            if (isResizing && selectedElement && currentResizeHandle) {
+                const canvas = document.getElementById('mainCanvas');
+                const canvasRect = canvas.getBoundingClientRect();
+                const elementRect = selectedElement.getBoundingClientRect();
+                
+                let newWidth, newHeight, newX, newY;
+                
+                const mouseX = e.clientX - canvasRect.left;
+                const mouseY = e.clientY - canvasRect.top;
+                
+                switch(currentResizeHandle) {
+                    case 'bottom-right':
+                        newWidth = mouseX - elementRect.left;
+                        newHeight = mouseY - elementRect.top;
+                        break;
+                    case 'bottom-left':
+                        newWidth = elementRect.right - mouseX;
+                        newHeight = mouseY - elementRect.top;
+                        newX = mouseX;
+                        break;
+                    case 'top-right':
+                        newWidth = mouseX - elementRect.left;
+                        newHeight = elementRect.bottom - mouseY;
+                        newY = mouseY;
+                        break;
+                    case 'top-left':
+                        newWidth = elementRect.right - mouseX;
+                        newHeight = elementRect.bottom - mouseY;
+                        newX = mouseX;
+                        newY = mouseY;
+                        break;
+                }
+                
+                if (newWidth > 50) {
+                    selectedElement.style.width = newWidth + 'px';
+                    if (newX !== undefined) selectedElement.style.left = newX + 'px';
+                }
+                if (newHeight > 30) {
+                    selectedElement.style.height = newHeight + 'px';
+                    if (newY !== undefined) selectedElement.style.top = newY + 'px';
+                }
+                
+                updateElementData(selectedElement);
+            }
+        }
+
+        function stopDrag() {
+            isDragging = false;
+            isResizing = false;
+            currentResizeHandle = null;
+            if (selectedElement) {
+                selectedElement.style.cursor = 'move';
+            }
+        }
+
+        function selectElement(element) {
+            if (selectedElement) {
+                selectedElement.style.outline = 'none';
+            }
+            selectedElement = element;
+            element.style.outline = '2px solid #3498db';
+        }
+
+        function showContextMenu(e, element) {
+            contextMenuElement = element;
+            const menu = document.getElementById('contextMenu');
+            menu.style.left = e.clientX + 'px';
+            menu.style.top = e.clientY + 'px';
+            menu.classList.add('show');
+            
+            const isImage = element.classList.contains('custom-image');
+            
+            // Mostrar opción de borde solo para imágenes
+            const borderOption = Array.from(menu.querySelectorAll('.context-menu-item'))
+                .find(item => item.textContent.includes('Borde'));
+            if (borderOption) {
+                borderOption.style.display = isImage ? 'block' : 'none';
+            }
+            
+            // Mostrar opción de eliminar vínculo si el elemento tiene uno
+            const elementId = element.id.replace('element_', '');
+            const elementData = pages[currentPage].elements.find(el => el.id == elementId);
+            
+            const unlinkOption = Array.from(menu.querySelectorAll('.context-menu-item'))
+                .find(item => item.textContent.includes('Eliminar Vínculo'));
+            if (unlinkOption) {
+                unlinkOption.style.display = elementData && elementData.link ? 'block' : 'none';
+            }
+        }
+
+        // Funciones de edición
+        function addTextElement() {
+            const elementData = {
+                id: elementIdCounter++,
+                type: 'text',
+                text: 'Nuevo Texto',
+                x: 100,
+                y: 100,
+                color: '#000000',
+                fontSize: 24,
+                fontFamily: 'Arial'
+            };
+            
+            pages[currentPage].elements.push(elementData);
+            createElement(elementData);
+        }
+
+        function addButtonElement() {
+            const elementData = {
+                id: elementIdCounter++,
+                type: 'button',
+                text: 'Nuevo Botón',
+                x: 100,
+                y: 200,
+                width: 150,
+                height: 50,
+                color: '#3498db',
+                link: null
+            };
+            
+            pages[currentPage].elements.push(elementData);
+            createElement(elementData);
+        }
+
+        function showImageModal() {
+            document.getElementById('imageModal').classList.add('show');
+        }
+
+        function insertImage() {
+            const imageUrl = document.getElementById('imageUrl').value.trim();
+            if (imageUrl) {
+                const elementData = {
+                    id: elementIdCounter++,
+                    type: 'image',
+                    src: imageUrl,
+                    x: 100,
+                    y: 300,
+                    width: 200,
+                    height: 200,
+                    border: '3px solid #3498db',
+                    borderRadius: '5px',
+                    link: null
+                };
+                
+                pages[currentPage].elements.push(elementData);
+                createElement(elementData);
+                document.getElementById('imageUrl').value = '';
+                closeModal('imageModal');
+            }
+        }
+
+        function editElementText() {
+            if (contextMenuElement) {
+                const newText = prompt('Nuevo texto:', contextMenuElement.textContent);
+                if (newText !== null) {
+                    contextMenuElement.textContent = newText;
+                    updateElementData(contextMenuElement);
+                }
+            }
+        }
+
+        function changeElementSize() {
+            if (contextMenuElement) {
+                const newWidth = prompt('Ancho (px):', parseInt(contextMenuElement.style.width) || 150);
+                const newHeight = prompt('Alto (px):', parseInt(contextMenuElement.style.height) || 50);
+                if (newWidth && newHeight) {
+                    contextMenuElement.style.width = newWidth + 'px';
+                    contextMenuElement.style.height = newHeight + 'px';
+                    updateElementData(contextMenuElement);
+                }
+            }
+        }
+
+        function addLink() {
+            if (contextMenuElement) {
+                const linkModal = document.getElementById('linkModal');
+                const pageSelector = document.getElementById('pageSelector');
+                const noPagesMessage = document.getElementById('noPagesMessage');
+                
+                pageSelector.innerHTML = '<option value="">Seleccionar página...</option>';
+                let hasPages = false;
+                
+                for (const [pageId, page] of Object.entries(pages)) {
+                    if (pageId !== currentPage) {
+                        pageSelector.innerHTML += `<option value="${pageId}">${page.title}</option>`;
+                        hasPages = true;
+                    }
+                }
+                
+                if (!hasPages) {
+                    noPagesMessage.style.display = 'block';
+                } else {
+                    noPagesMessage.style.display = 'none';
+                }
+                
+                const elementId = contextMenuElement.id.replace('element_', '');
+                const elementData = pages[currentPage].elements.find(el => el.id == elementId);
+                if (elementData && elementData.link) {
+                    pageSelector.value = elementData.link;
+                }
+                
+                linkModal.classList.add('show');
+                window._linkElement = contextMenuElement;
+            }
+        }
+
+        function setLink() {
+            const pageId = document.getElementById('pageSelector').value;
+            const element = window._linkElement;
+            
+            if (pageId && element) {
+                const elementId = element.id.replace('element_', '');
+                const elementData = pages[currentPage].elements.find(el => el.id == elementId);
+                
+                if (elementData) {
+                    elementData.link = pageId;
+                }
+                
+                element.onclick = function(e) {
+                    e.stopPropagation();
+                    loadPage(pageId);
+                };
+                
+                if (element.classList.contains('custom-image')) {
+                    element.style.cursor = 'pointer';
+                }
+                
+                let indicator = element.querySelector('.link-indicator');
+                if (!indicator) {
+                    indicator = document.createElement('div');
+                    indicator.className = 'link-indicator';
+                    indicator.textContent = '🔗';
+                    element.appendChild(indicator);
+                }
+                
+                closeModal('linkModal');
+            } else if (!pageId) {
+                alert('Por favor selecciona una página para vincular');
+            }
+        }
+
+        function removeLink() {
+            if (contextMenuElement) {
+                const elementId = contextMenuElement.id.replace('element_', '');
+                const elementData = pages[currentPage].elements.find(el => el.id == elementId);
+                
+                if (elementData) {
+                    elementData.link = null;
+                }
+                
+                contextMenuElement.onclick = null;
+                if (contextMenuElement.classList.contains('custom-image')) {
+                    contextMenuElement.style.cursor = 'move';
+                }
+                
+                const indicator = contextMenuElement.querySelector('.link-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+                
+                updateElementData(contextMenuElement);
+            }
+        }
+
+        function cutElement() {
+            copyElement();
+            deleteElement();
+        }
+
+        function copyElement() {
+            if (contextMenuElement) {
+                const elementId = contextMenuElement.id.replace('element_', '');
+                const elementData = pages[currentPage].elements.find(el => el.id == elementId);
+                if (elementData) {
+                    copiedElement = JSON.parse(JSON.stringify(elementData));
+                }
+            }
+        }
+
+        function pasteElement() {
+            if (copiedElement) {
+                const newElement = JSON.parse(JSON.stringify(copiedElement));
+                newElement.id = elementIdCounter++;
+                newElement.x += 20;
+                newElement.y += 20;
+                
+                pages[currentPage].elements.push(newElement);
+                createElement(newElement);
+            }
+        }
+
+        function deleteElement() {
+            if (contextMenuElement) {
+                const elementId = contextMenuElement.id.replace('element_', '');
+                pages[currentPage].elements = pages[currentPage].elements.filter(el => el.id != elementId);
+                contextMenuElement.remove();
+                contextMenuElement = null;
+            }
+        }
+
+        function changeBackgroundTexture() {
+            const textures = [
+                { name: 'Puntos', value: 'radial-gradient(circle, #ddd 1px, transparent 1px)', size: '20px 20px' },
+                { name: 'Líneas horizontales', value: 'repeating-linear-gradient(0deg, #eee, #eee 1px, transparent 1px, transparent 20px)' },
+                { name: 'Líneas verticales', value: 'repeating-linear-gradient(90deg, #eee, #eee 1px, transparent 1px, transparent 20px)' },
+                { name: 'Cuadrícula', value: 'repeating-linear-gradient(0deg, #eee, #eee 1px, transparent 1px, transparent 20px), repeating-linear-gradient(90deg, #eee, #eee 1px, transparent 1px, transparent 20px)' },
+                { name: 'Diagonal', value: 'repeating-linear-gradient(45deg, #f5f5f5, #f5f5f5 10px, #ffffff 10px, #ffffff 20px)' }
+            ];
+            
+            let textureList = 'Selecciona una textura:\n\n';
+            textures.forEach((texture, index) => {
+                textureList += `${index}: ${texture.name}\n`;
+            });
+            
+            const selectedIndex = prompt(textureList, '0');
+            if (selectedIndex >= 0 && selectedIndex < textures.length) {
+                pages[currentPage].background = textures[selectedIndex].value;
+                document.getElementById('mainCanvas').style.background = textures[selectedIndex].value;
+            }
+        }
+
+        function updateElementData(element) {
+            const elementId = element.id.replace('element_', '');
+            const elementData = pages[currentPage].elements.find(el => el.id == elementId);
+            
+            if (elementData) {
+                elementData.x = parseInt(element.style.left);
+                elementData.y = parseInt(element.style.top);
+                
+                if (elementData.type === 'button' || elementData.type === 'image') {
+                    elementData.width = parseInt(element.style.width);
+                    elementData.height = parseInt(element.style.height);
+                }
+                
+                if (elementData.type === 'text') {
+                    elementData.text = element.textContent;
+                    elementData.color = element.style.color;
+                    elementData.fontSize = parseInt(element.style.fontSize);
+                }
+                
+                if (elementData.type === 'button') {
+                    elementData.text = element.textContent;
+                    elementData.color = element.style.backgroundColor;
+                }
+                
+                if (elementData.type === 'image') {
+                    elementData.border = element.style.border;
+                    elementData.borderRadius = element.style.borderRadius;
+                }
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // Deseleccionar al hacer clic en el canvas
+        document.getElementById('mainCanvas').addEventListener('click', function(e) {
+            if (e.target === this) {
+                if (selectedElement) {
+                    selectedElement.style.outline = 'none';
+                    selectedElement = null;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
